@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Platform, ListView, ActivityIndicator, AsyncStorage } from 'react-native';
+import { StyleSheet, View, Platform, FlatList, ActivityIndicator, AsyncStorage } from 'react-native';
 import Header from './Header';
 import Footer from './Footer';
 import Row from './Row';
@@ -15,13 +15,13 @@ const filterItems = (filter, items) => {
 export default class App extends React.Component {
   constructor(props){
     super(props);
-    const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 != r2});
+
     this.state = {
       loading: true,
       allComplete: false,
       value: "",
       items: [],
-      dataSource: ds.cloneWithRows([]),
+      dataSource: [],
       filter: "ALL",
     }
   }
@@ -40,7 +40,7 @@ export default class App extends React.Component {
   setSource = (items, itemsDataSource, otherState = {}) => {
     this.setState({
       items,
-      dataSource: this.state.dataSource.cloneWithRows(itemsDataSource),
+      dataSource: itemsDataSource,
       ...otherState
     });
     AsyncStorage.setItem("items", JSON.stringify(items));
@@ -128,24 +128,25 @@ export default class App extends React.Component {
           onToggleAllComplete={this.handleToggleAllComplete}
         />
         <View style={styles.content}>
-          <ListView 
+          <FlatList 
             style={styles.list}
             enableEmptySections
-            dataSource={this.state.dataSource}
+            data={this.state.dataSource}
             keyboardDismissMode="on-drag"
-            renderRow={({key, ...value}) => {
+            keyExtractor={(item, index) => item.key.toString()}
+            renderItem={({item}) => {
               return (
                 <Row 
-                  key={key}
-                  onUpdate={(text) => this.handleUpdateText(key, text)}
-                  onToggleEdit={(editing) => this.handleToggleEditing(key, editing)}
-                  onComplete={(complete) => this.handleToggleComplete(key, complete)}
-                  onRemove={() => this.handleRemoveItem(key)}
-                  {...value}
+                  key={item.key}
+                  onUpdate={(text) => this.handleUpdateText(item.key, text)}
+                  onToggleEdit={(editing) => this.handleToggleEditing(item.key, editing)}
+                  onComplete={(complete) => this.handleToggleComplete(item.key, complete)}
+                  onRemove={() => this.handleRemoveItem(item.key)}
+                  {...item}
                 />
               )
             }}
-            renderSeparator={(sectionId, rowId) => {
+            ItemSeparatorComponent={(rowId) => {
               return <View key={rowId} style={styles.separator} />
             }}
           />
